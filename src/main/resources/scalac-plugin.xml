@@ -1,0 +1,4 @@
+<plugin>
+  <name>coreen</name>
+  <classname>coreen.scala.CoreenPlugin</classname>
+</plugin>
