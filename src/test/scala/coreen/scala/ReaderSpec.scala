@@ -5,17 +5,16 @@ package coreen.scala
 
 import scala.xml.{Elem, NodeSeq, PrettyPrinter}
 
-import org.scalatest.{FlatSpec, Tag}
-import org.scalatest.matchers.ShouldMatchers
+import org.specs._
 
 /**
  * Basic tests for the Scala reader.
  */
-class ReaderSpec extends FlatSpec with ShouldMatchers
+object ReaderSpec extends Specification
 {
   // used to run a single spec, add: should "..." taggedAs(TheOne) in {
   // and then run: test-only coreen.scala.ReaderSpec -- -n theone
-  object TheOne extends Tag("theone")
+  // object TheOne extends Tag("theone")
 
   val testA = """
     package foo.bar
@@ -33,24 +32,24 @@ class ReaderSpec extends FlatSpec with ShouldMatchers
       }
     }"""
 
-  "Reader" should "handle this code" in {
+  "Reader should handle this code" in {
     val cunit = Reader.process("TestA.scala", testA)
-    // println(pretty(cunit))
+    println(pretty(cunit))
 
     val pkg = (cunit \ "def").head
-    (pkg \ "@name").text should equal("foo.bar")
+    (pkg \ "@name").text mustEqual "foo.bar"
 
     val outer = (pkg \ "def").head
-    (outer \ "@name").text should equal("TestA")
+    (outer \ "@name").text mustEqual "TestA"
 
     val innerA  = (outer \ "def").head
-    (innerA \ "@name").text should equal("A")
-    (innerA \ "def" \ "@name").text should equal("value")
-    // (innerA \ "def" \ "use" \ "@target").text should equal("int")
+    (innerA \ "@name").text mustEqual "A"
+    (innerA \ "def" \ "@name").text mustEqual "value"
+    // (innerA \ "def" \ "use" \ "@target").text mustEqual "int"
 
     val innerB = (outer \ "def").tail.head
-    (innerB \ "@name").text should equal("B")
-    (innerB \ "def" \ "@name").text should equal("noop")
+    (innerB \ "@name").text mustEqual "B"
+    (innerB \ "def" \ "@name").text mustEqual "noop"
   }
 
   // val testB = """
@@ -620,5 +619,5 @@ class ReaderSpec extends FlatSpec with ShouldMatchers
   //   }
   // }
 
-  // protected def pretty (cunit :Elem) = new PrettyPrinter(999, 2).format(cunit)
+  protected def pretty (cunit :Elem) = new PrettyPrinter(999, 2).format(cunit)
 }

@@ -1,10 +1,14 @@
 import sbt._
 
 class CoreenScalaReader (info :ProjectInfo) extends DefaultProject(info) /*with ProguardProject*/ {
-  val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test"
+  val specs = "org.scala-tools.testing" %% "specs"  % "1.6.7.1"
+  // val scalatest = "org.scalatest" % "scalatest" % "1.2" % "test"
   // val scalaj_collection = "org.scalaj" %% "scalaj-collection" % "1.0"
 
   override def filterScalaJars = false
+
+  override def localScala =
+    List(defineScala("2.9.0-local", new java.io.File("/home/mdb/ops/scala-trunk/target/pack")))
 
   // // we need tools.jar in our classpath because we're building against scalac bits
   // val toolsJarPath = Path.fromFile(
