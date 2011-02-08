@@ -26,6 +26,7 @@ object CoreenPlugin {
       def apply (unit :global.CompilationUnit) {
         println("Humble beginnings " + unit)
         // TODO!
+        /*ReaderComponent.this.*/global.treeBrowsers.create().browse(unit.body)
       }
     }
   }
