@@ -6,11 +6,12 @@ package coreen.scala
 import java.io.File
 import java.net.URLClassLoader
 
+import scala.xml.Elem
+
 import scala.tools.nsc.{Settings, Global}
-import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.io.{AbstractFile, VirtualDirectory}
 import scala.tools.nsc.reporters.ConsoleReporter
 import scala.tools.nsc.util.{SourceFile, BatchSourceFile, ClassPath}
-import scala.xml.Elem
 
 /**
  * Provides an API for converting Scala source to name-resolved source.
@@ -46,26 +47,26 @@ object Reader
 
     // we have to set up the classpath for the compiler manually
     val loader = getClass.getClassLoader.asInstanceOf[URLClassLoader]
-    println(loader)
-    println(loader.getParent)
-    println(getField(loader.getParent, "parentA").asInstanceOf[ClassLoader].getParent)
-    println(getField(loader.getParent, "parentB").asInstanceOf[URLClassLoader].getURLs.toList)
     val entries = loader.getURLs map(_.getPath)
     // annoyingly, the Scala library is not in our classpath, so we have to add it manually
     val sclpath = entries find(_.endsWith("scala-compiler.jar")) map(
       _.replaceAll("scala-compiler.jar", "scala-library.jar"))
     settings.classpath.value = ClassPath.join((entries ++ sclpath) : _*)
 
-    val compiler = new Global(settings, new ConsoleReporter(settings))
-    // TODO: stop at a particular phase, activate plugins
+    // save class files to a virtual directory in memory
+    settings.outputDirs.setSingleOutput(new VirtualDirectory("(memory)", None))
+
+    val compiler = new ReaderCompiler(settings)
     new compiler.Run() compileSources(sources)
-    Nil
+    compiler.rcomp.unitelems
   }
 
-  def getField (obj :AnyRef, field :String) = {
-    val f = obj.getClass.getDeclaredFields find(_.getName == field) getOrElse(
-      throw new Exception("Missing field " + field))
-    f.setAccessible(true)
-    f.get(obj)
+  class ReaderCompiler (settings :Settings) extends Global(settings, new ConsoleReporter(settings))
+  {
+    val rcomp = new CoreenPlugin.ReaderComponent(this)
+    override protected def computeInternalPhases () {
+      super.computeInternalPhases
+      phasesSet += rcomp
+    }
   }
 }
