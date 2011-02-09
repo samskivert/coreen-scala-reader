@@ -9,6 +9,7 @@ import scala.xml.Elem
 
 import scala.tools.nsc.{Global, Phase}
 import scala.tools.nsc.plugins.PluginComponent
+import scala.tools.nsc.util.RangePosition
 
 /**
  * Traverses a Scala AST and translates it into the Coreen XML format.
@@ -37,52 +38,43 @@ class TranslatorComponent (val global :Global) extends PluginComponent
 
     // TODO: start={...} bodyStart={...} bodyEnd={...}
     override def traverse (tree :Tree) :Unit = tree match {
-      case PackageDef(pid, stats) => {
+      case t @ PackageDef(pid, stats) => {
         withId(pid.toString) {
-          buf += <def id={_curid} name={pid.toString} kind="module" flavor="none" access="public">
-          {capture(super.traverse(tree))}
-          </def>
+          buf += mkDef(pid.toString, "module", "none", "public", t.pos,
+                       capture(super.traverse(tree)))
         }
       }
 
-      case ClassDef(mods, name, tparams, impl) => {
+      case t @ ClassDef(mods, name, tparams, impl) => {
         withId(name.toString) {
-          buf += <def id={_curid} name={name.toString} kind="type" flavor="none"
-                      access={access(mods)}>
-          {capture(super.traverse(tree))}
-          </def>
+          buf += mkDef(name.toString, "type", "none", access(mods), t.pos,
+                       capture(super.traverse(tree)))
         }
       }
 
-      case ModuleDef(mods, name, impl) => {
+      case t @ ModuleDef(mods, name, impl) => {
         withId(name.toString) {
-          buf += <def id={_curid} name={name.toString} kind="module" flavor="none"
-                      access={access(mods)}>
-          {capture(super.traverse(tree))}
-          </def>
+          buf += mkDef(name.toString, "module", "none", access(mods), t.pos,
+                       capture(super.traverse(tree)))
         }
       }
 
-      case ValDef(mods, name, tpt, rhs) => {
-        println("val mods " + name + " => " + mods)
+      case t @ ValDef(mods, name, tpt, rhs) => {
+        println("val '" + name + "' => " + t.pos)
         withId(name.toString) {
-          buf += <def id={_curid} name={name.toString} kind="term" flavor="none"
-                      access={access(mods)}>
-          {capture(super.traverse(tree))}
-          </def>
+          buf += mkDef(name.toString, "term", "none", access(mods), t.pos,
+                       capture(super.traverse(tree)))
         }
       }
 
-      case DefDef(mods, name, tparams, vparamss, tpt, rhs) => {
+      case t @ DefDef(mods, name, tparams, vparamss, tpt, rhs) => {
         val isCtor = (name == nme.CONSTRUCTOR)
         // println("def mods " + name + " => " + mods + ", oname " + currentOwner.name)
         val flavor = if (isCtor) "constructor" else "method" // TODO
         val dname = if (isCtor) currentOwner.name.toString // owning class name
                     else name.toString
         withId(dname) {
-          buf += <def id={_curid} name={dname} kind="func" flavor={flavor} access={access(mods)}>
-          {capture(super.traverse(tree))}
-          </def>
+          buf += mkDef(dname, "func", flavor, access(mods), t.pos, capture(super.traverse(tree)))
         }
       }
 
@@ -92,6 +84,18 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       }
 
       case _ => super.traverse(tree)
+    }
+
+    private def mkDef (name :String, kind :String, flavor :String, access :String, pos :Position,
+                       body :Seq[Elem]) = {
+      val (start, point, end) = pos match {
+        case rp :RangePosition => (rp.start, rp.point, rp.end)
+        case _ => (-1, pos.point, -1)
+      }
+      <def id={_curid} name={name} kind={kind} flavor={flavor} access={access}
+           start={point.toString} bodyStart={start.toString} bodyEnd={end.toString}>
+        {body}
+      </def>
     }
 
     private def access (mods :Modifiers) =

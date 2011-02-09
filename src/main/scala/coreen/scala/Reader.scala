@@ -8,10 +8,11 @@ import java.net.URLClassLoader
 
 import scala.xml.Elem
 
-import scala.tools.nsc.{Settings, Global}
+import scala.tools.nsc.interactive.RangePositions
 import scala.tools.nsc.io.{AbstractFile, VirtualDirectory}
 import scala.tools.nsc.reporters.ConsoleReporter
 import scala.tools.nsc.util.{SourceFile, BatchSourceFile, ClassPath}
+import scala.tools.nsc.{Settings, Global}
 
 /**
  * Provides an API for converting Scala source to name-resolved source.
@@ -62,6 +63,7 @@ object Reader
   }
 
   class ReaderCompiler (settings :Settings) extends Global(settings, new ConsoleReporter(settings))
+    with RangePositions
   {
     val rcomp = new TranslatorComponent(this)
     override protected def computeInternalPhases () {
