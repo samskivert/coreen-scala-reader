@@ -35,7 +35,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
   def newTranslator = new Traverser {
     var buf = Buffer[Elem]()
 
-    // TODO: id={_curid} start={_text.indexOf(pname, _ctx.curunit.pos).toString}
+    // TODO: start={...} bodyStart={...} bodyEnd={...}
     override def traverse (tree :Tree) :Unit = tree match {
       case PackageDef(pid, stats) => {
         withId(pid.toString) {
@@ -44,6 +44,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
           </def>
         }
       }
+
       case ClassDef(mods, name, tparams, impl) => {
         withId(name.toString) {
           buf += <def id={_curid} name={name.toString} kind="type" flavor="none"
@@ -52,6 +53,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
           </def>
         }
       }
+
       case ModuleDef(mods, name, impl) => {
         withId(name.toString) {
           buf += <def id={_curid} name={name.toString} kind="module" flavor="none"
@@ -60,6 +62,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
           </def>
         }
       }
+
       case ValDef(mods, name, tpt, rhs) => {
         println("val mods " + name + " => " + mods)
         withId(name.toString) {
@@ -69,21 +72,25 @@ class TranslatorComponent (val global :Global) extends PluginComponent
           </def>
         }
       }
+
       case DefDef(mods, name, tparams, vparamss, tpt, rhs) => {
         val isCtor = (name == nme.CONSTRUCTOR)
-        // println("def mods " + name + " => " + mods)
+        // println("def mods " + name + " => " + mods + ", oname " + currentOwner.name)
         val flavor = if (isCtor) "constructor" else "method" // TODO
-        val dname = if (isCtor) "TODO" else name.toString
+        val dname = if (isCtor) currentOwner.name.toString // owning class name
+                    else name.toString
         withId(dname) {
           buf += <def id={_curid} name={dname} kind="func" flavor={flavor} access={access(mods)}>
           {capture(super.traverse(tree))}
           </def>
         }
       }
+
       case Apply(fun, args) => {
         println("traversing application of "+ fun)
         super.traverse(tree)
       }
+
       case _ => super.traverse(tree)
     }
 
@@ -96,6 +103,13 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       val sep = if (!first.isEmpty) " " else ""
       first + sep + second
     }
+
+    // private def withCtx (ctx :Context)(block : =>Unit) {
+    //   val octx = _ctx
+    //   _ctx = ctx
+    //   block
+    //   _ctx = octx
+    // }
 
     private def withId (id :String)(block : =>Unit) {
       val oid = _curid
@@ -112,6 +126,12 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       buf = obuf
       nbuf
     }
+
+    // case class Context (curunit :JCCompilationUnit,
+    //                     curclass :JCClassDecl,
+    //                     curmeth :JCMethodDecl,
+    //                     curdoc :DefDoc)
+    // private var _ctx :Context = Context(null, null, null, null)
 
     private var _curid :String = ""
   }
