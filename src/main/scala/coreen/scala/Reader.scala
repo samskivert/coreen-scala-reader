@@ -63,7 +63,7 @@ object Reader
 
   class ReaderCompiler (settings :Settings) extends Global(settings, new ConsoleReporter(settings))
   {
-    val rcomp = new CoreenPlugin.ReaderComponent(this)
+    val rcomp = new TranslatorComponent(this)
     override protected def computeInternalPhases () {
       super.computeInternalPhases
       phasesSet += rcomp
