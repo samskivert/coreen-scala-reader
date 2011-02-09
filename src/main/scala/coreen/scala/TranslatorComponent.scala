@@ -38,34 +38,47 @@ class TranslatorComponent (val global :Global) extends PluginComponent
     // TODO: id={_curid} start={_text.indexOf(pname, _ctx.curunit.pos).toString}
     override def traverse (tree :Tree) :Unit = tree match {
       case PackageDef(pid, stats) => {
-        buf += <def name={pid.toString} kind="module" flavor="none" access="public">
-        {capture(super.traverse(tree))}
-        </def>
+        withId(pid.toString) {
+          buf += <def id={_curid} name={pid.toString} kind="module" flavor="none" access="public">
+          {capture(super.traverse(tree))}
+          </def>
+        }
       }
       case ClassDef(mods, name, tparams, impl) => {
-        buf += <def name={name.toString} kind="type" flavor="none" access={access(mods)}>
-        {capture(super.traverse(tree))}
-        </def>
+        withId(name.toString) {
+          buf += <def id={_curid} name={name.toString} kind="type" flavor="none"
+                      access={access(mods)}>
+          {capture(super.traverse(tree))}
+          </def>
+        }
       }
       case ModuleDef(mods, name, impl) => {
-        buf += <def name={name.toString} kind="module" flavor="none" access={access(mods)}>
-        {capture(super.traverse(tree))}
-        </def>
+        withId(name.toString) {
+          buf += <def id={_curid} name={name.toString} kind="module" flavor="none"
+                      access={access(mods)}>
+          {capture(super.traverse(tree))}
+          </def>
+        }
       }
       case ValDef(mods, name, tpt, rhs) => {
         println("val mods " + name + " => " + mods)
-        buf += <def name={name.toString} kind="term" flavor="none" access={access(mods)}>
-        {capture(super.traverse(tree))}
-        </def>
+        withId(name.toString) {
+          buf += <def id={_curid} name={name.toString} kind="term" flavor="none"
+                      access={access(mods)}>
+          {capture(super.traverse(tree))}
+          </def>
+        }
       }
       case DefDef(mods, name, tparams, vparamss, tpt, rhs) => {
         val isCtor = (name == nme.CONSTRUCTOR)
-          val flavor = if (isCtor) "constructor"
-                       else "method" // TODO
         // println("def mods " + name + " => " + mods)
-        buf += <def name={name.toString} kind="func" flavor={flavor} access={access(mods)}>
-        {capture(super.traverse(tree))}
-        </def>
+        val flavor = if (isCtor) "constructor" else "method" // TODO
+        val dname = if (isCtor) "TODO" else name.toString
+        withId(dname) {
+          buf += <def id={_curid} name={dname} kind="func" flavor={flavor} access={access(mods)}>
+          {capture(super.traverse(tree))}
+          </def>
+        }
       }
       case Apply(fun, args) => {
         println("traversing application of "+ fun)
@@ -79,9 +92,14 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       else if (mods hasFlag Flags.PRIVATE) "private"
       else "public"
 
+    private def joinDefIds (first :String, second :String) = {
+      val sep = if (!first.isEmpty) " " else ""
+      first + sep + second
+    }
+
     private def withId (id :String)(block : =>Unit) {
       val oid = _curid
-      _curid = id
+      _curid = joinDefIds(_curid, id)
       block
       _curid = oid
     }
@@ -95,6 +113,6 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       nbuf
     }
 
-    private var _curid :String = _
+    private var _curid :String = ""
   }
 }
