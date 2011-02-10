@@ -48,11 +48,12 @@ object Reader
 
     // we have to set up the classpath for the compiler manually
     val loader = getClass.getClassLoader.asInstanceOf[URLClassLoader]
-    val entries = loader.getURLs map(_.getPath)
+    val entries = loader.getURLs map(_.getPath) toSeq
     // annoyingly, the Scala library is not in our classpath, so we have to add it manually
     val sclpath = entries find(_.endsWith("scala-compiler.jar")) map(
       _.replaceAll("scala-compiler.jar", "scala-library.jar"))
-    settings.classpath.value = ClassPath.join((entries ++ sclpath) : _*)
+    val ecpath = if (classpath.isEmpty) entries else classpath map(_.getPath)
+    settings.classpath.value = ClassPath.join((ecpath ++ sclpath) : _*)
 
     // save class files to a virtual directory in memory
     settings.outputDirs.setSingleOutput(new VirtualDirectory("(memory)", None))
