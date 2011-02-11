@@ -10,18 +10,12 @@ class CoreenScalaReader (info :ProjectInfo) extends DefaultProject(info) with Pr
   override def localScala =
     List(defineScala("2.9.0-local", new java.io.File("/home/mdb/ops/scala-trunk/target/pack")))
 
-  // TODO: we need scala-compiler.jar
-
-  // we need tools.jar in our classpath because we're building against javac bits
-  // val toolsJarPath = Path.fromFile(
-  //   Path.fileProperty("java.home").asFile.getParent) / "lib" / "tools.jar"
-  // override def unmanagedClasspath = super.unmanagedClasspath +++ toolsJarPath
-
   // proguard plugin configurations
-  override def proguardInJars = super.proguardInJars +++ scalaLibraryPath
-  // override def proguardLibraryJars = super.proguardLibraryJars +++ toolsJarPath
+  override def proguardInJars = super.proguardInJars +++ buildCompilerJar
+  override def proguardLibraryJars = super.proguardLibraryJars +++ buildLibraryJar
   override def proguardOptions = List(
     "-dontnote scala.**",
+    "-keep class ch.epfl.lamp.fjbg.** { *; }",
     proguardKeepMain("coreen.scala.Main")
   )
 }

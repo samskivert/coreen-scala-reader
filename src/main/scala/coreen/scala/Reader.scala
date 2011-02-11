@@ -44,16 +44,15 @@ object Reader
   def process0 (sources :List[SourceFile], classpath :Seq[File]) :Iterable[Elem] = {
     val settings = new Settings
 
-    // TODO: this is all SBT specific
-
-    // we have to set up the classpath for the compiler manually
+    // locate the scala-library.jar
     val loader = getClass.getClassLoader.asInstanceOf[URLClassLoader]
     val entries = loader.getURLs map(_.getPath) toSeq
-    // annoyingly, the Scala library is not in our classpath, so we have to add it manually
-    val sclpath = entries find(_.endsWith("scala-compiler.jar")) map(
+    // one or both of these might match, we prefer the direct match over viansc
+    val viansc = entries find(_.endsWith("scala-compiler.jar")) map(
       _.replaceAll("scala-compiler.jar", "scala-library.jar"))
-    val ecpath = if (classpath.isEmpty) entries else classpath map(_.getPath)
-    settings.classpath.value = ClassPath.join((ecpath ++ sclpath) : _*)
+    val scalalib = entries find(_.endsWith("scala-library.jar")) orElse(viansc)
+    // configure the compiler with the supplied classpath plus scala-library.jar
+    settings.classpath.value = ClassPath.join(classpath.map(_.getPath) ++ scalalib : _*)
 
     // save class files to a virtual directory in memory
     settings.outputDirs.setSingleOutput(new VirtualDirectory("(memory)", None))
