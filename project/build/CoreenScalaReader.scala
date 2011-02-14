@@ -16,6 +16,7 @@ class CoreenScalaReader (info :ProjectInfo) extends DefaultProject(info) with Pr
   override def proguardOptions = List(
     "-dontnote scala.**",
     "-keep class ch.epfl.lamp.fjbg.** { *; }",
+    "-keep class scala.tools.nsc.** { *; }",
     proguardKeepMain("coreen.scala.Main")
   )
 }
