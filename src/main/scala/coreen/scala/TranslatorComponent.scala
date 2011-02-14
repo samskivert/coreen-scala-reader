@@ -29,7 +29,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       println("Processing " + unit + "...")
       val trans = newTranslator
       trans.traverse(unit.body)
-      unitelems += <compunit name={unit.source.file.name}>{trans.buf}</compunit>
+      unitelems += <compunit src={unit.source.file.path}>{trans.buf}</compunit>
     }
   }
 
