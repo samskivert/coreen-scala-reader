@@ -116,7 +116,7 @@ object Main
 
   private def die (msg :String) = {
     System.err.println(msg)
-    sys.exit(255)
-    sys.error("Not reached")
+    /*sys.*/exit(255)
+    /*sys.*/error("Not reached")
   }
 }
