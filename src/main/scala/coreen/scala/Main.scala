@@ -25,18 +25,17 @@ object Main
 
     // set up a filter function if any path prefixes were provided
     val filter = if (filters.isEmpty) (path :String) => true
-                 else (path :String) => path.startsWith(args(0)) && {
-                   val relpath = stripFS(path.substring(args(0).length))
-                   filters exists(pre => relpath.startsWith(pre) || pre.startsWith(relpath))
-                 }
+                 else mkFilter(args(0), filters) _
 
     // scan the project directory for source and jar files
     val files = collectFiles(root, filter)
 
     // try to find our project dependencies via a pom.xml file or a .coreen file, and fall back to
     // scanning the project directories for all jar files in the absence of those
-    val jars = locateJarsViaMaven(root).getOrElse(
-      locateJarsViaDotCoreen(root).getOrElse(files.getOrElse("jar", List())))
+    val jars = locateJarsViaSBT(root).getOrElse(
+      locateJarsViaMaven(root).getOrElse(
+        locateJarsViaDotCoreen(root).getOrElse(
+          files.getOrElse("jar", List()))))
     out.println("Using classpath:")
     for (j <- jars) out.println("  " + j)
 
@@ -56,6 +55,17 @@ object Main
       out.println("Compiling " + sources.size + " Scala source files...")
       Reader.process(sources, jars) foreach(print)
     }
+  }
+
+  def mkFilter (root :String, prefixes :Seq[String])(path :String) = path.startsWith(root) && {
+    val relpath = stripFS(path.substring(root.length))
+    prefixes exists(pre => relpath.startsWith(pre) || pre.startsWith(relpath))
+  }
+
+  def locateJarsViaSBT (root :File) :Option[Seq[File]] = {
+    val props = new File(new File(root, "project"), "build.properties")
+    if (!props.exists) None
+    else collectFiles(root, mkFilter(root.getPath, List("lib", "lib_managed"))).get("jar")
   }
 
   def locateJarsViaMaven (root :File) :Option[Seq[File]] = {
