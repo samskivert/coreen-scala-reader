@@ -60,10 +60,9 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       }
 
       case t @ ValDef(mods, name, tpt, rhs) => {
-        println("val '" + name + "' => " + t.pos)
-        withId(name.toString) {
-          // a 'val foo' turns into 'def "foo"' and 'val "foo "'; workaround this for now
-          val ename = name.toString.replace(' ', '_')
+        // a 'val foo' turns into 'def "foo"' and 'val "foo "'; workaround this for now
+        val ename = name.toString.replace(' ', '_')
+        withId(ename) {
           buf += mkDef(ename, "term", "none", access(mods), t.pos,
                        capture(super.traverse(tree)))
         }
@@ -80,10 +79,10 @@ class TranslatorComponent (val global :Global) extends PluginComponent
         }
       }
 
-      case Apply(fun, args) => {
-        println("traversing application of "+ fun)
-        super.traverse(tree)
-      }
+      // case Apply(fun, args) => {
+      //   println("traversing application of "+ fun)
+      //   super.traverse(tree)
+      // }
 
       case _ => super.traverse(tree)
     }
