@@ -62,7 +62,9 @@ class TranslatorComponent (val global :Global) extends PluginComponent
       case t @ ValDef(mods, name, tpt, rhs) => {
         println("val '" + name + "' => " + t.pos)
         withId(name.toString) {
-          buf += mkDef(name.toString, "term", "none", access(mods), t.pos,
+          // a 'val foo' turns into 'def "foo"' and 'val "foo "'; workaround this for now
+          val ename = name.toString.replace(' ', '_')
+          buf += mkDef(ename, "term", "none", access(mods), t.pos,
                        capture(super.traverse(tree)))
         }
       }
