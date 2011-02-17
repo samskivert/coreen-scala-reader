@@ -32,24 +32,48 @@ object ReaderSpec extends Specification
       }
     }"""
 
-  "Reader should handle this code" in {
-    val cunit = Reader.process("TestA.scala", testA)
+  // "Reader should handle this code" in {
+  //   val cunit = Reader.process("TestA.scala", testA)
+  //   println(pretty(cunit))
+
+  //   // val pkg = (cunit \ "def").head
+  //   // (pkg \ "@name").text mustEqual "foo.bar"
+
+  //   // val outer = (pkg \ "def").head
+  //   // (outer \ "@name").text mustEqual "TestA"
+
+  //   // val innerA  = (outer \ "def").head
+  //   // (innerA \ "@name").text mustEqual "A"
+  //   // (innerA \ "def" \ "@name").text mustEqual "value"
+  //   // // (innerA \ "def" \ "use" \ "@target").text mustEqual "int"
+
+  //   // val innerB = (outer \ "def").tail.head
+  //   // (innerB \ "@name").text mustEqual "B"
+  //   // (innerB \ "def" \ "@name").text mustEqual "noop"
+  // }
+
+  val testCase = """
+    case class Name (first :String, last :String)
+    """
+
+  "Reader should filter case class synthentics" in {
+    val cunit = Reader.process("TestCase.scala", testCase)
     println(pretty(cunit))
 
-    val pkg = (cunit \ "def").head
-    (pkg \ "@name").text mustEqual "foo.bar"
+    // val pkg = (cunit \ "def").head
+    // (pkg \ "@name").text mustEqual "foo.bar"
 
-    val outer = (pkg \ "def").head
-    (outer \ "@name").text mustEqual "TestA"
+    // val outer = (pkg \ "def").head
+    // (outer \ "@name").text mustEqual "TestA"
 
-    val innerA  = (outer \ "def").head
-    (innerA \ "@name").text mustEqual "A"
-    (innerA \ "def" \ "@name").text mustEqual "value"
-    // (innerA \ "def" \ "use" \ "@target").text mustEqual "int"
+    // val innerA  = (outer \ "def").head
+    // (innerA \ "@name").text mustEqual "A"
+    // (innerA \ "def" \ "@name").text mustEqual "value"
+    // // (innerA \ "def" \ "use" \ "@target").text mustEqual "int"
 
-    val innerB = (outer \ "def").tail.head
-    (innerB \ "@name").text mustEqual "B"
-    (innerB \ "def" \ "@name").text mustEqual "noop"
+    // val innerB = (outer \ "def").tail.head
+    // (innerB \ "@name").text mustEqual "B"
+    // (innerB \ "def" \ "@name").text mustEqual "noop"
   }
 
   // val testB = """
