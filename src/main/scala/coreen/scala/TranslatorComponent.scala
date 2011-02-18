@@ -160,33 +160,37 @@ class TranslatorComponent (val global :Global) extends PluginComponent
 
       override def printRaw (tree :Tree) {
         tree match {
-          case PackageDef(packaged, stats) =>
+          case PackageDef(packaged, stats) => {
             printAnnotations(tree)
             print("package "); print(packaged)
+          }
 
-          case ValDef(mods, name, tp, rhs) =>
+          case ValDef(mods, name, tp, rhs) => {
             printAnnotations(tree)
             printModifiers(tree, mods)
             // print(if (mods.isMutable) "var " else "val ")
             print(if (mods hasFlag Flags.MUTABLE) "var " else "val ")
             print(symName(tree, name))
             printOpt(": ", tp)
+          }
 
-          case DefDef(mods, name, tparams, vparamss, tp, rhs) =>
+          case DefDef(mods, name, tparams, vparamss, tp, rhs) => {
             printAnnotations(tree)
             printModifiers(tree, mods)
             print("def " + symName(tree, name))
             printTypeParams(tparams)
             vparamss foreach printValueParams
             printOpt(": ", tp)
+          }
 
-          case Template(parents, self, body) =>
+          case Template(parents, self, body) => {
             val currentOwner1 = currentOwner
             if (tree.symbol != NoSymbol) currentOwner = tree.symbol.owner
             printRow(parents, " with ")
             currentOwner = currentOwner1
+          }
 
-          case tt: TypeTree =>
+          case tt: TypeTree => {
             if ((tree.tpe eq null) || (settings.Xprintpos.value && tt.original != null)) {
               if (tt.original != null) { print("<type: "); print(tt.original); print(">") }
               else print("<type ?>")
@@ -202,6 +206,7 @@ class TranslatorComponent (val global :Global) extends PluginComponent
               System.out.println("TYPE2 " + tree.tpe + "/" + tree.tpe.typeSymbol)
               print(name)
             }
+          }
 
           case _ => super.printRaw(tree)
         }
